@@ -1,47 +1,33 @@
 const express = require("express");
+const cors = require("cors");
 const { JSDOM } = require("jsdom");
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-const getMetaTags = (html, link) => {
-  const description = html.getElementsByName("description")[0];
+const getMetaTag = (html) => {
+  const headElement = html.head.children;
+  const meta = Array.from(headElement).map((v) => {
+    const property = v.getAttribute("property") ?? v.getAttribute("name");
+    return {
+      [property]: v.content,
+    };
+  });
 
-  const ogImage = html.querySelector('meta[property="og:image"]');
-  const ogImageContent = ogImage ? ogImage.content : "";
+  let res = {};
+  meta.forEach((v) => {
+    if (v["og:title"] || v["twitter:title"])
+      res.title = v["og:title"] ?? v["twitter:title"];
+    if (v["og:description"] || v["twitter:description"])
+      res.description = v["og:description"] ?? v["twitter:description"];
+    if (v["og:image"] || v["twitter:image"])
+      res.image = v["og:image"] ?? v["twitter:image"];
+  });
 
-  if (!link) return;
-
-  const domain = link.match(/^https?:\/{2,}(.*?)(?:\/|\?|#|$)/)[1];
-  let image;
-  if (ogImage === undefined) {
-    image = "";
-  } else if (/^https?:\/\//.test(ogImageContent)) {
-    const file = ogImageContent;
-    const fileLink = file.match(/^https?:\/{2,}(.*?)(?:\/|\?|#|$)/);
-
-    if (fileLink === null) image = `https://${domain}${file.slice(7)}`;
-    else if (fileLink[1] !== domain) {
-      const filePathSplit = file.split("/")[3];
-      image = `https://${fileLink[1]}/${filePathSplit}`;
-    }
-  } else {
-    const file = ogImageContent;
-    const fileLink = file.match(/^https?:\/{2,}(.*?)(?:\/|\?|#|$)/);
-    if (fileLink === null) {
-      image = `https://${domain}${file.slice(7)}`;
-    } else {
-      const filePathSplit = file.split("/").slice(3).join("/");
-      image = `https://${domain}/${filePathSplit}`;
-    }
-  }
-
-  return {
-    title: html.title,
-    description: description === undefined ? "" : description.content,
-    image: image ?? "",
-  };
+  return res;
 };
+
+app.use(cors());
 
 app.get("/api", (req, res) => {
   const { url } = req.query;
@@ -51,7 +37,7 @@ app.get("/api", (req, res) => {
     .then((response) => response.text())
     .then((htmlString) => {
       const html = new JSDOM(htmlString).window.document;
-      const metaTags = getMetaTags(html, url);
+      const metaTags = getMetaTag(html);
 
       res.json(metaTags);
     });
