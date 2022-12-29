@@ -4,8 +4,8 @@
   "description": "BFF for takurinton",
   "main": "index.js",
   "scripts": {
-    "build": "esbuild index.js --bundle --outfile=dist/index.js --platform=node",
-    "watch": "esbuild index.js --bundle --outfile=dist/index.js --platform=node --watch"
+    "build": "",
+    "watch": "esbuild app.js --bundle --outfile=dist/index.js --platform=node --watch"
   },
   "author": "takurinton",
   "license": "ISC",

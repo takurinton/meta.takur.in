@@ -43,8 +43,8 @@ const getMetaTags = (html, link) => {
   };
 };
 
-app.get("/", (req, res) => {
-  const url = req.query.url;
+app.get("/api", (req, res) => {
+  const { url } = req.query;
   if (!url) return res.status(400).send("No URL provided");
 
   fetch(url)
