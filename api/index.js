@@ -24,6 +24,23 @@ const getMetaTag = (html) => {
       res.image = v["og:image"] ?? v["twitter:image"];
   });
 
+  const icon =
+    html.querySelector('link[rel="icon"]') ||
+    html.querySelector('link[rel="shortcut icon"]') ||
+    html.querySelector('link[rel="apple-touch-icon"]');
+
+  if (icon) {
+    const href = icon.getAttribute("href");
+    try {
+      res.favicon = new URL(href, baseUrl).href;
+    } catch {
+      res.favicon = href;
+    }
+  } else {
+    // fallback
+    res.favicon = new URL("/favicon.ico", baseUrl).href;
+  }
+
   return res;
 };
 
