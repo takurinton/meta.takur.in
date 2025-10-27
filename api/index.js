@@ -5,7 +5,7 @@ const { JSDOM } = require("jsdom");
 const app = express();
 const port = process.env.PORT || 3000;
 
-const getMetaTag = (html) => {
+const getMetaTag = (html, baseUrl) => {
   const headElement = html.head.children;
   const meta = Array.from(headElement).map((v) => {
     const property = v.getAttribute("property") ?? v.getAttribute("name");
@@ -31,15 +31,18 @@ const getMetaTag = (html) => {
 
   if (icon) {
     const href = icon.getAttribute("href");
-    if (href.startsWith("/")) {
-      const origin = new URL(baseUrl).origin;
-      res.favicon = origin + href;
-    } else {
+    try {
       res.favicon = new URL(href, baseUrl).href;
+    } catch {
+      res.favicon = href;
     }
   } else {
     // fallback
-    res.favicon = new URL("/favicon.ico", baseUrl).href;
+    try {
+      res.favicon = new URL("/favicon.ico", baseUrl).href;
+    } catch {
+      res.favicon = null;
+    }
   }
 
   return res;
@@ -55,9 +58,12 @@ app.get("/api", (req, res) => {
     .then((response) => response.text())
     .then((htmlString) => {
       const html = new JSDOM(htmlString).window.document;
-      const metaTags = getMetaTag(html);
-
+      const metaTags = getMetaTag(html, url);
       res.json(metaTags);
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(500).send("Failed to fetch metadata");
     });
 });
 
