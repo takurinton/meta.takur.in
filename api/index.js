@@ -29,11 +29,17 @@ const getMetaTag = (html) => {
     html.querySelector('link[rel="shortcut icon"]') ||
     html.querySelector('link[rel="apple-touch-icon"]');
 
-  if (href.startsWith("/")) {
-    const origin = new URL(baseUrl).origin;
-    res.favicon = origin + href;
+  if (icon) {
+    const href = icon.getAttribute("href");
+    if (href.startsWith("/")) {
+      const origin = new URL(baseUrl).origin;
+      res.favicon = origin + href;
+    } else {
+      res.favicon = new URL(href, baseUrl).href;
+    }
   } else {
-    res.favicon = new URL(href, baseUrl).href;
+    // fallback
+    res.favicon = new URL("/favicon.ico", baseUrl).href;
   }
 
   return res;
